@@ -129,6 +129,19 @@ This repository will be updated with additional PowerShell scripts and utilities
    osfetch.ps1
    ```
 
+### 🔁 Auto-Run on Startup
+To execute `osfetch` automatically when opening any terminal (CMD or PowerShell):
+
+1. **Enable Auto-Run:**
+   ```cmd
+   .\Osfetch\setup-autorun.bat
+   ```
+
+2. **Disable/Remove Auto-Run:**
+   ```cmd
+   .\Osfetch\remove-autorun.bat
+   ```
+
 ### Manual Installation (Alternative)
 
 1. **Open your PowerShell profile:**
