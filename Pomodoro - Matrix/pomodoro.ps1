@@ -1,17 +1,33 @@
-<#
-.SYNOPSIS
-    Pomodoro Matrix V17 - RED SCREEN FIX
-    - Flash visual encapsulado y protegido.
-    - Garantía de limpieza de buffer entre sesiones.
-#>
+# Pomodoro Matrix V17 - parametrizado y seguro
+[CmdletBinding()]
+param(
+    [int]$TrabajoMinutos = 25,
+    [int]$DescansoMinutos = 5,
+    [int]$Sesiones = 4,
+    [int]$VelocidadMs = 30
+)
+
+$TrabajoMinutos = [Math]::Max(1, $TrabajoMinutos)
+$DescansoMinutos = [Math]::Max(1, $DescansoMinutos)
+$Sesiones = [Math]::Max(1, $Sesiones)
+$VelocidadMs = [Math]::Max(1, $VelocidadMs)
+
+$origFg = [Console]::ForegroundColor
+$origBg = [Console]::BackgroundColor
+$origCursor = [Console]::CursorVisible
 
 # --- 1. PREPARACIÓN DEL SISTEMA ---
+
+# CONTROLES RÁPIDOS
+# m: mostrar/ocultar lluvia   p: pausar/reanudar
+# f: saltar sesión actual     c: cerrar programa
+
 function Reset-ConsoleState {
     try {
         [Console]::ResetColor()
-        [Console]::ForegroundColor = "Gray"
-        [Console]::BackgroundColor = "Black"
-        [Console]::CursorVisible = $true
+        [Console]::ForegroundColor = $origFg
+        [Console]::BackgroundColor = $origBg
+        [Console]::CursorVisible = $origCursor
         if ([Console]::BufferWidth -ne [Console]::WindowWidth) {
             try { [Console]::BufferWidth = [Console]::WindowWidth } catch {}
         }
@@ -89,7 +105,7 @@ public static class FastConsole {
             buf[i].Char.UnicodeChar = (char)(data[i] & 0xFFFF);
             buf[i].Attributes = (short)(data[i] >> 16);
         }
-        SmallRect rect = new SmallRect() { Left = 0, Top = 0, Right = (short)w, Bottom = (short)h };
+        SmallRect rect = new SmallRect() { Left = 0, Top = 0, Right = (short)(w - 1), Bottom = (short)(h - 1) };
         WriteConsoleOutput(hConsole, buf, new Coord((short)w, (short)h), new Coord(0, 0), ref rect);
     }
 }
@@ -126,8 +142,13 @@ function Render-Hourglass {
 
 # --- 4. BUCLE PRINCIPAL ---
 function Run-Timer {
-    param ($Minutes, $Title, $ColStr)
+    param(
+        [int]$Minutes,
+        [string]$Title,
+        [int]$FrameMs = $VelocidadMs
+    )
     $TotalSec = $Minutes * 60; if ($TotalSec -le 0) { $TotalSec = 1 }
+    $frameDelay = [Math]::Max(1, $FrameMs)
     
     # Asegurar negrura antes de empezar
     [Console]::BackgroundColor = "Black"
@@ -147,11 +168,13 @@ function Run-Timer {
     $ShowRain = $true
     $Paused = $false
     $LastT = Get-Date; $Elapsed = 0
+    $frameTimer = [System.Diagnostics.Stopwatch]::StartNew()
 
     [Console]::CursorVisible = $false
 
     try {
         while ($Elapsed -lt $TotalSec) {
+            $frameTimer.Restart()
             # --- INPUT ---
             if ([Console]::KeyAvailable) {
                 $k = [Console]::ReadKey($true)
@@ -211,7 +234,7 @@ function Run-Timer {
             for ($k = 0; $k -lt $hudText.Length; $k++) {
                 $idx = $k; if ($idx -lt $size) { $buffer[$idx] = (0x000F * 65536) + [int][char]$hudText[$k] }
             }
-            $helpText = " [F] Saltar  [C] Salir "
+            $helpText = " [M] Lluvia  [P] Pausa  [F] Saltar  [C] Salir "
             $startHelp = ($w * ($h - 1))
             for ($k = 0; $k -lt $helpText.Length; $k++) {
                 $idx = $startHelp + $k; if ($idx -lt $size) { $buffer[$idx] = (0x0008 * 65536) + [int][char]$helpText[$k] }
@@ -219,7 +242,9 @@ function Run-Timer {
 
             Render-Hourglass -buffer $buffer -w $w -h $h -total $TotalSec -elapsed $Elapsed -colorFrame $cClockFrame -colorSand $cClockSand
             [FastConsole]::Render($w, $h, $buffer)
-            Start-Sleep -Milliseconds 30
+            $elapsedFrame = $frameTimer.ElapsedMilliseconds
+            $sleep = [Math]::Max(0, $frameDelay - $elapsedFrame)
+            if ($sleep -gt 0) { Start-Sleep -Milliseconds $sleep }
         }
     } finally { [Console]::CursorVisible = $true }
     
@@ -242,21 +267,21 @@ function Get-SafeInput {
 $Host.UI.RawUI.WindowTitle = "Pomodoro Matrix V17"
 Reset-ConsoleState
 
-Write-Host "--- POMODORO V17 (RED SCREEN FIX) ---" -ForegroundColor Cyan
-$W = Get-SafeInput "Min Trabajo" 25
-$S = Get-SafeInput "Sesiones" 4
-$B = Get-SafeInput "Min Descanso" 5
+Write-Host "--- Matrixmodoro ---" -ForegroundColor Cyan
+$W = Get-SafeInput "Min Trabajo" $TrabajoMinutos
+$S = Get-SafeInput "Sesiones" $Sesiones
+$B = Get-SafeInput "Min Descanso" $DescansoMinutos
 
 try {
     for ($i = 1; $i -le [int]$S; $i++) {
-        $Result = Run-Timer $W "TRABAJO $i" "Green"
+        $Result = Run-Timer -Minutes $W -Title "TRABAJO $i"
         if ($Result -eq "STOP") { break }
 
         # --- FLASH ROJO SEGURO ---
         Invoke-Flash -ColorName "DarkRed"
 
         if ($i -lt [int]$S) { 
-            $Result = Run-Timer $B "DESCANSO" "Cyan"
+            $Result = Run-Timer -Minutes $B -Title "DESCANSO"
             if ($Result -eq "STOP") { break }
 
             # --- FLASH AZUL SEGURO ---

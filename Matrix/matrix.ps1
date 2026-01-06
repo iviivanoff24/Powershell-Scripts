@@ -1,53 +1,26 @@
-<#
-.SYNOPSIS
-    High-Performance "Matrix" Digital Rain Simulation.
+# --- PARAMETROS DE USUARIO ---
+[CmdletBinding()]
+param(
+    [int]$Velocidad = 30,
+    [switch]$MostrarReloj
+)
 
-.DESCRIPTION
-    This script simulates the falling code effect from the movie "The Matrix" inside the Windows Console.
-    
-    unlike standard PowerShell scripts that use `Write-Host` (which is slow and causes flickering), 
-    this script embeds C# code to access the native Windows Kernel32 API. It uses P/Invoke to call 
-    `WriteConsoleOutput`, allowing for direct buffer manipulation. This results in smooth, high-FPS 
-    rendering even at large window sizes.
-
-    Features:
-    - High-performance rendering engine (FastConsole class).
-    - Auto-resizing support.
-    - Optional Digital Clock overlay.
-    - Authentic "fading" trails (White head -> Neon Glow -> Dark Body).
-
-.PARAMETER Velocidad
-    Controls the refresh rate of the loop in milliseconds. Lower is faster. 
-    Default is 30ms.
-
-.PARAMETER MostrarReloj
-    Boolean ($true/$false) to toggle a digital clock overlay in the center of the screen.
-
-.INPUTS
-    None.
-
-.OUTPUTS
-    Direct Console Buffer Output.
-
-.NOTES
-    - Exit Key: Press 'F' to close the simulation cleanly.
-    - Font Requirement: For best results, use a font that supports Japanese Katakana 
-      (e.g., MS Gothic, NSimSun, or a Nerd Font), otherwise characters may appear as boxes.
-
-.EXAMPLE
-    .\Matrix.ps1
-    # Runs the simulation with default settings.
-#>
+$Velocidad = [Math]::Max(1, $Velocidad)
 
 # --- KERNEL SETUP ---
-[Console]::CursorVisible = $false
-$Host.UI.RawUI.BackgroundColor = "Black"
-try { [Console]::BufferWidth = [Console]::WindowWidth } catch {}
-[Console]::Clear()
+$origFg = [Console]::ForegroundColor
+$origBg = [Console]::BackgroundColor
+$origCursor = [Console]::CursorVisible
 
-# --- AJUSTES DE USUARIO ---
-$Velocidad = 30 
-$MostrarReloj = $false
+try {
+    [Console]::CursorVisible = $false
+    $Host.UI.RawUI.BackgroundColor = "Black"
+    try { [Console]::BufferWidth = [Console]::WindowWidth } catch {}
+    [Console]::Clear()
+
+# CONTROLES RÁPIDOS
+# F : salir limpio
+# Ajusta tamaño de ventana y el motor se reconfigura solo
 
 # --- MOTOR DE RENDERIZADO (C# / INT32) ---
 $code = @"
@@ -116,7 +89,7 @@ public static class FastConsole {
             buf[i].Attributes = (short)(data[i] >> 16);
         }
 
-        SmallRect rect = new SmallRect() { Left = 0, Top = 0, Right = (short)w, Bottom = (short)h };
+        SmallRect rect = new SmallRect() { Left = 0, Top = 0, Right = (short)(w - 1), Bottom = (short)(h - 1) };
         WriteConsoleOutput(hConsole, buf, new Coord((short)w, (short)h), new Coord(0, 0), ref rect);
     }
 }
@@ -161,9 +134,11 @@ $bVer    = '|'
 
 # Caracteres Matrix
 $chars = 0x30A0..0x30FF + 0x21..0x7E | ForEach-Object { [int]$_ }
+$frameTimer = [System.Diagnostics.Stopwatch]::StartNew()
 
 # --- BUCLE PRINCIPAL ---
 while ($true) {
+    $frameTimer.Restart()
     # 1. DETECTOR DE SALIDA
     if ([Console]::KeyAvailable) {
         $keyInfo = [Console]::ReadKey($true)
@@ -258,12 +233,16 @@ while ($true) {
 
     # 5. RENDERIZADO
     [FastConsole]::Render($w, $h, $buffer)
-    Start-Sleep -Milliseconds $Velocidad
+    $elapsed = $frameTimer.ElapsedMilliseconds
+    $sleep = [Math]::Max(0, $Velocidad - $elapsed)
+    if ($sleep -gt 0) { Start-Sleep -Milliseconds $sleep }
 }
 
-# --- RESTAURACIÓN ---
-[Console]::ResetColor()
-[Console]::ForegroundColor = "White"
-[Console]::BackgroundColor = "Black"
-[Console]::CursorVisible = $true
-Clear-Host
+} finally {
+    # --- RESTAURACIÓN ---
+    [Console]::ResetColor()
+    [Console]::ForegroundColor = $origFg
+    [Console]::BackgroundColor = $origBg
+    [Console]::CursorVisible = $origCursor
+    Clear-Host
+}
