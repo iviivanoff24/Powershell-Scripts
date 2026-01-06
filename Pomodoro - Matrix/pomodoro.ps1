@@ -264,10 +264,10 @@ function Get-SafeInput {
 }
 
 # --- 6. LANZAMIENTO ---
-$Host.UI.RawUI.WindowTitle = "Pomodoro Matrix V17"
+$Host.UI.RawUI.WindowTitle = "Pomomatrix"
 Reset-ConsoleState
 
-Write-Host "--- Matrixmodoro ---" -ForegroundColor Cyan
+Write-Host "--- Pomomatrix ---" -ForegroundColor Cyan
 $W = Get-SafeInput "Min Trabajo" $TrabajoMinutos
 $S = Get-SafeInput "Sesiones" $Sesiones
 $B = Get-SafeInput "Min Descanso" $DescansoMinutos
