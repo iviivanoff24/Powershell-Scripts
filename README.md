@@ -8,7 +8,7 @@ A collection of high-performance PowerShell scripts and utilities for Windows.
 
 ```powershell
 # 1. Clone the repository
-git clone https://github.com/yourusername/powershell-scripts.git
+git clone https://github.com/iviivanoff24/powershell-scripts.git
 cd powershell-scripts
 
 # 2. Run the installer (adds scripts to PATH)
@@ -17,6 +17,7 @@ cd powershell-scripts
 # 3. Restart PowerShell and run
 matrix.ps1
 pomodoro.ps1
+osfetch.ps1
 ```
 
 ---
@@ -72,6 +73,32 @@ pwsh ./pomodoro.ps1
 
 ---
 
+### 3. Osfetch
+**Location:** `Osfetch/osfetch.ps1`
+
+A hyper-fluid alternative to winfetch/neofetch optimized for speed.
+
+![Osfetch Demo](.img/osfetch.png)
+
+**Features:**
+- Ultra-fast system information display (caches results)
+- minimal WMI/CIM queries
+- Customizable logos (Windows 10, 11, Minimal, etc.)
+
+**Usage:**
+```powershell
+cd Osfetch
+pwsh ./osfetch.ps1
+
+# With custom logo
+pwsh ./osfetch.ps1 -Logo minimal
+```
+
+**Parameters:**
+- `-Logo <string>`: Select logo from `default`, `minimal`, `simple`, `windows`, `windows10`, `windows11` (Default: `windows11`)
+
+---
+
 ## 📦 More Projects Coming Soon
 
 This repository will be updated with additional PowerShell scripts and utilities.
@@ -99,6 +126,7 @@ This repository will be updated with additional PowerShell scripts and utilities
    ```powershell
    matrix.ps1
    pomodoro.ps1
+   osfetch.ps1
    ```
 
 ### Manual Installation (Alternative)
@@ -125,6 +153,12 @@ This repository will be updated with additional PowerShell scripts and utilities
        & "C:\path\to\powershell-scripts\Pomodoro - Matrix\pomodoro.ps1"
    }
    Set-Alias -Name pomodoro -Value Start-Pomodoro
+
+   function Start-Osfetch {
+       param([string]$Logo = 'windows11')
+       & "C:\path\to\powershell-scripts\Osfetch\osfetch.ps1" -Logo $Logo
+   }
+   Set-Alias -Name osfetch -Value Start-Osfetch
    ```
 
 3. **Reload profile:**

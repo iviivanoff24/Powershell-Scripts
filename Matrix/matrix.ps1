@@ -1,7 +1,7 @@
 # --- PARAMETROS DE USUARIO ---
 [CmdletBinding()]
 param(
-    [int]$Velocidad = 30,
+    [int]$Velocidad = 20,
     [switch]$MostrarReloj
 )
 
