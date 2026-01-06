@@ -6,6 +6,7 @@ param(
 )
 
 $Velocidad = [Math]::Max(1, $Velocidad)
+$showClock = [bool]$MostrarReloj
 
 # --- KERNEL SETUP ---
 $origFg = [Console]::ForegroundColor
@@ -143,6 +144,7 @@ while ($true) {
     if ([Console]::KeyAvailable) {
         $keyInfo = [Console]::ReadKey($true)
         if ($keyInfo.KeyChar -eq 'f' -or $keyInfo.KeyChar -eq 'F') { break }
+        if ($keyInfo.KeyChar -eq 'r' -or $keyInfo.KeyChar -eq 'R') { $showClock = -not $showClock }
     }
 
     # 2. DETECTOR DE REDIMENSIÓN
@@ -195,7 +197,7 @@ while ($true) {
     }
 
     # 4. INYECTAR RELOJ (ASCII SEGURO)
-    if ($MostrarReloj) {
+    if ($showClock) {
         $timeStr = " " + (Get-Date).ToString("HH:mm") + " "
         
         # Construcción: +-----+
@@ -231,7 +233,15 @@ while ($true) {
         }
     }
 
-    # 5. RENDERIZADO
+    # 5. HUD AYUDA
+    $helpText = " [R] Reloj: " + ($(if ($showClock) { "On" } else { "Off" })) + "  [F] Salir "
+    $startHelp = ($w * ($h - 1))
+    for ($k = 0; $k -lt $helpText.Length; $k++) {
+        $idx = $startHelp + $k
+        if ($idx -lt $size) { $buffer[$idx] = (0x0008 * 65536) + [int][char]$helpText[$k] }
+    }
+
+    # 6. RENDERIZADO
     [FastConsole]::Render($w, $h, $buffer)
     $elapsed = $frameTimer.ElapsedMilliseconds
     $sleep = [Math]::Max(0, $Velocidad - $elapsed)

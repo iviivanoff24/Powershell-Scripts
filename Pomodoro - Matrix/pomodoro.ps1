@@ -268,13 +268,13 @@ $Host.UI.RawUI.WindowTitle = "Pomomatrix"
 Reset-ConsoleState
 
 Write-Host "--- Pomomatrix ---" -ForegroundColor Cyan
-$W = Get-SafeInput "Min Trabajo" $TrabajoMinutos
-$S = Get-SafeInput "Sesiones" $Sesiones
+$W = Get-SafeInput "Min Sesiones" $TrabajoMinutos
+$S = Get-SafeInput "N Sesiones" $Sesiones
 $B = Get-SafeInput "Min Descanso" $DescansoMinutos
 
 try {
     for ($i = 1; $i -le [int]$S; $i++) {
-        $Result = Run-Timer -Minutes $W -Title "TRABAJO $i"
+        $Result = Run-Timer -Minutes $W -Title "SESION $i"
         if ($Result -eq "STOP") { break }
 
         # --- FLASH ROJO SEGURO ---
