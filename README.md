@@ -4,7 +4,7 @@ A collection of high-performance PowerShell scripts and utilities for Windows.
 
 ---
 
-## � Quick Start
+## Quick Start
 
 ```powershell
 # 1. Clone the repository
@@ -22,7 +22,7 @@ osfetch.ps1
 
 ---
 
-## �📋 Projects
+## 📋 Projects
 
 ### 1. Matrix Digital Rain
 **Location:** `Matrix/matrix.ps1`
@@ -105,7 +105,7 @@ This repository will be updated with additional PowerShell scripts and utilities
 
 ---
 
-## � Installation
+## Installation
 
 ### Prerequisites
 - **Windows 10/11** with PowerShell 5.1 or later (or PowerShell 7+)
